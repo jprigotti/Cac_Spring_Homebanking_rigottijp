@@ -9,6 +9,7 @@ import cac.dailutb.repositories.AccountRepository;
 import cac.dailutb.repositories.TypeAccountRepository;
 import cac.dailutb.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +76,7 @@ public class AccountService {
         return true;
     }
 
-    public Boolean CreateAccountDto(AccountDto accountDto) {
+    public Account CreateAccountDto(AccountDto accountDto) {
         Account account = new Account();
         User user = userRepository.findById(parseInt(accountDto.getUserId())).get();
         TypeAccount typeAccount = typeAccountRepository.findById(parseInt(accountDto.getAccountTypeId())).get();
@@ -97,7 +98,7 @@ public class AccountService {
         account.setCbu(cbuNumber);
         account.setNumber(accountNumber);
         repo.save(account);
-        return true;
+        return account;
     }
 
     public List<Account> getAccountOfUser(int user_id) {
@@ -122,4 +123,7 @@ public class AccountService {
             return false;
         }
     }
+
 }
+
+

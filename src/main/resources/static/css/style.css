@@ -22,17 +22,6 @@
 body{
 }
 
-.form-select{
-width: 200px !important;
-}
-
-.btn{
-    background: none
-}
-
-p{
-    width: 100% !important;
-}
 
 .container a{
     text-decoration: none !important;
@@ -49,27 +38,3 @@ p{
     background-color: var(--gray-600);
     color: var(--gray-100);
 }
-
-.alert_background{
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: rgba(0,0,0,0.5);
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center ;
-    visibility: hidden;
-}
-
-.alert_container{
-    border: 1px solid var(--gray-400);
-    background-color: var(--gray-200);
-    max-width: 400px !important;
-}
-
-.alert_container .btn{
-    width: 40% !important;
-}
-

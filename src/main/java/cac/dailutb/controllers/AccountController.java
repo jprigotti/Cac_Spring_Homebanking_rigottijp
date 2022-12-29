@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.lang.Integer.parseInt;
 @Controller
@@ -49,7 +50,12 @@ public class AccountController {
     //GET A LIST OF ACCOUNTS FOR A SPECIFIC USER_ID
     @GetMapping("api/account/user/{user_id}")
     public String getAccountsOfUser(@PathVariable("user_id") int user_id, Model model) {
-        return generateAccountsView(user_id, model);
+        Optional<User> user = userService.find(user_id);
+        if(user.isPresent()){
+        return generateAccountsView(user.get(), model);
+        }else{
+            return ("User not found");
+        }
     }
 
 
@@ -57,17 +63,17 @@ public class AccountController {
     @PostMapping("/api/account/user/type")
     @ResponseStatus(code = HttpStatus.ACCEPTED)
     public String createAssignAccountToUserDTO(@ModelAttribute("accountDto") AccountDto accountDto, Model model){
-        service.CreateAccountDto(accountDto);
-        int user_id = parseInt(accountDto.getUserId());
+        Account account = service.CreateAccountDto(accountDto);
+//        int user_id = parseInt(accountDto.getUserId());
 
-        return generateAccountsView(user_id, model);
+        return generateAccountsView(account.getUser(), model);
     }
 
     //GENERATE A DEPOSIT FORM
     @GetMapping("api/account/deposit/form")
     public String depositForm(@ModelAttribute("accountDto") AccountDto accountDto, Model model){
         int account_id = parseInt(accountDto.getAccountId());
-        Account account = accountRepository.findById(account_id).get();
+        Account account = service.find(account_id).get();
         model.addAttribute("account", account);
         model.addAttribute("accountNumber", "Account Number: ");
         model.addAttribute("accountType", "Account Type: " );
@@ -78,19 +84,18 @@ public class AccountController {
     //UPDATE BALANCE
     @PostMapping("/api/account/deposit")
     public String deposit(@ModelAttribute("accountDto") AccountDto accountDto, Model model){
-        int user_id = parseInt(accountDto.getUserId());
         int account_id = parseInt(accountDto.getAccountId());
-        Account account = accountRepository.findById(account_id).get();
+        Account account = service.find(account_id).get();
         account.setBalance(account.getBalance() + Double.parseDouble(accountDto.getAmount()));
-        accountRepository.save(account);
-        return generateAccountsView(user_id, model);
+        account = service.update(account);
+        return generateAccountsView(account.getUser(), model);
     }
 
     //GENERATE A TRANSFER FORM
     @GetMapping("api/account/transfer/form")
     public String transferForm(@ModelAttribute("accountDto") AccountDto accountDto, Model model){
         int account_id = parseInt(accountDto.getAccountId());
-        Account account = accountRepository.findById(account_id).get();
+        Account account = service.find(account_id).get();
         model.addAttribute("account", account);
         model.addAttribute("accountNumber", "Account Number: ");
         model.addAttribute("accountType", "Account Type: " );
@@ -101,6 +106,8 @@ public class AccountController {
     //TRANSFER
     @PostMapping("/api/account/transfer")
     public String transfer(@ModelAttribute("accountDto") AccountDto accountDto, Model model){
+
+
         int user_id = parseInt(accountDto.getUserId());
         double transferAmount = Double.parseDouble(accountDto.getTransferAmount());
         String transferCbu = accountDto.getTransferCbu();
@@ -120,8 +127,8 @@ public class AccountController {
         sourceAccount.getListTransfer().add(transfer);
         accountRepository.save(sourceAccount);
 
-
-        return generateAccountsView(user_id, model);
+        User user = userService.find(user_id).get();
+        return generateAccountsView(user, model);
     }
 
 
@@ -141,25 +148,30 @@ public class AccountController {
     }
 
     //DELETE AN SPECIFIC ACCOUNT FOR A USER
-    @PostMapping("/api/account/delete")
-    public String delete(@ModelAttribute("delAccountDto") DelAccountDto delAccountDto, Model model){
-        int user_id = parseInt(delAccountDto.getUserId());
-        int account_id = parseInt(delAccountDto.getAccountId());
-        service.remove(account_id);
+//    @PostMapping("/api/account/delete")
+//    public String delete(@ModelAttribute("delAccountDto") DelAccountDto delAccountDto, Model model){
+//        int user_id = parseInt(delAccountDto.getUserId());
+//        int account_id = parseInt(delAccountDto.getAccountId());
+//        service.remove(account_id);
+//
+//        return generateAccountsView(user_id, model);
+//    }
 
-        return generateAccountsView(user_id, model);
+    @GetMapping("/api/account/delete/{account_id}/{user_id}")
+    public String deleteAccount( @PathVariable("account_id") int account_id,
+                                 @PathVariable("user_id") int user_id,
+                                 Model model){
+        service.remove(account_id);
+        User user = userService.find(user_id).get();
+        return generateAccountsView(user, model);
     }
 
-
     //THIS METHOD GENERATES THE ACCOUNTS.HTML VIEW, RECEIVES AN INT USER_ID AND A MODEL
-    public String generateAccountsView(int user_id, Model model){
-        User user = userService.find(user_id).get();
-        List<Account> accountsList = service.getAccountOfUser(user_id);
+    public String generateAccountsView(User user, Model model){
         Iterable<TypeAccount> typeAccountList = typeAccountService.findAll();
         model.addAttribute("title", "Cuentas del usuario: " );
-        model.addAttribute("accounts", accountsList);
-        model.addAttribute("typeAccounts", typeAccountList);
         model.addAttribute("user", user);
+        model.addAttribute("typeAccounts", typeAccountList);
         return "accounts";
     }
 
